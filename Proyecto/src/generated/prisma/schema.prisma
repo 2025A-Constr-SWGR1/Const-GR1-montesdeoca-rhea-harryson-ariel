@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Facultad {
+  FIS
+  FICA
+  FIQ
+  FCA
+}
+
+enum Plan {
+  AvoCloud
+  AvoTech
+  Avocoder
+}
+
+model Usuario {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  cedula         String   @unique
+  nombre         String
+  apellido       String
+  codigo_unico   String   @unique
+  correo         String   @unique
+  celular        String
+  clave          String
+  facultad       Facultad
+  esAportante    Boolean
+  tipoAportacion Json?
+}
+
+model Aportacion {
+  id               String @id @default(auto()) @map("_id") @db.ObjectId
+  nombre_plan      Plan
+  precio           Float
+  precio_Casillero Float
+  gratisAlMes      Json?
+  descuentos       Json?
+}
