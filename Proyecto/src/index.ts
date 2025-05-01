@@ -1,7 +1,9 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import connectDB from './data/database';
-import usuarioRoutes from './routes/usuario.route';
+import { usuarioRoutes } from './routes/usuario.routes';
+import { aportacionRoutes } from './routes/aportacion.routes';
+import { alquilerRoutes } from './routes/alquiler.routes';
 
 dotenv.config(); // Cargar variables de entorno
 
@@ -12,7 +14,10 @@ connectDB()
 
 // Middleware (opcional)
 app.use(express.json());
-app.use('/usuario', usuarioRoutes);
+app.use('/usuario', usuarioRoutes());
+app.use('/aportacion', aportacionRoutes());
+app.use('/alquiler', alquilerRoutes());
+
 
 app.get('/', (req: Request, res: Response): void => {
   const name = process.env.NAME || 'World';

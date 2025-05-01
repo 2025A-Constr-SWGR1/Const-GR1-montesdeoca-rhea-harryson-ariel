@@ -1,88 +1,50 @@
-import { prop, getModelForClass, modelOptions } from '@typegoose/typegoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
+// Enums
 export enum Facultad {
-  FIS = 'FIS',
-  FICA = 'FICA',
-  FIQ = 'FIQ',
-  FCA = 'FCA',
+  FIS = "FIS",
+  FICA = "FICA",
+  FIQ = "FIQ",
+  FCA = "FCA",
 }
 
-export enum Plan {
-  AvoCloud = 'AvoCloud',
-  AvoTech = 'AvoTech',
-  Avocoder = 'Avocoder',
+export interface Usuario extends Document {
+  _id: string;
+  nombre: string;
+  apellido: string;
+  cedula: string;
+  correo: string;
+  celular: string;
+  clave: string;
+  codigo_unico: string;
+  facultad: Facultad;
+  esAportante: boolean;
+  aportacion_id?: string;
 }
 
-class GratisAlMes {
-    @prop()
-    billar?: { usado: boolean };
-  
-    @prop()
-    pingPong?: { usado: boolean };
-  
-    @prop()
-    hockey?: { usado: boolean };
-  
-    @prop()
-    consolas?: { usado: boolean };
-  }
+const UsuariosSchema = new Schema({
+  _id: { type: String, required: true },
+  nombre: { type: String, required: true },
+  apellido: { type: String, required: true },
+  cedula: { type: String, required: true },
+  correo: { type: String, required: true },
+  codigo_unico: { type: String, required: true },
+  celular: { type: String, required: true },
+  clave: { type: String, required: true },
+  facultad: {
+    type: String,
+    enum: Object.values(Facultad),
+    required: true,
+  },
+  esAportante: {
+    type: Boolean,
+    required: true,
+  },
+  aportacion_id: {
+    type: String,
+    ref: 'Aportacion',
+    default: null,
+  },
+});
 
-class Descuento {
-  @prop({ required: true })
-  nombre!: string;
-
-  @prop({ required: true })
-  descuento!: number;
-}
-
-class Aportacion {
-  @prop({ required: true, enum: Plan })
-  nombre_plan!: Plan;
-
-  @prop({ required: true })
-  precio!: number;
-
-  @prop({ required: true })
-  precio_Casillero!: number;
-
-  @prop({ _id: false })
-  gratisAlMes?: GratisAlMes;
-
-  @prop({ type: () => [Descuento], default: [] })
-  descuentos!: Descuento[];
-}
-
-@modelOptions({ schemaOptions: { collection: 'usuarios', timestamps: true } })
-export class Usuario {
-  @prop({ required: true, unique: true })
-  cedula!: string;
-
-  @prop({ required: true })
-  nombre!: string;
-
-  @prop({ required: true })
-  apellido!: string;
-
-  @prop({ required: true, unique: true })
-  codigo_unico!: string;
-
-  @prop({ required: true, unique: true })
-  correo!: string;
-
-  @prop({ required: true })
-  celular!: string;
-
-  @prop({ required: true })
-  clave!: string;
-
-  @prop({ required: true, enum: Facultad })
-  facultad!: Facultad;
-
-  @prop({ required: true })
-  esAportante!: boolean;
-
-  @prop({ _id: false })
-  tipoAportacion?: Aportacion;
-}
-
-export const UsuarioModel = getModelForClass(Usuario);
+export const UsuarioModel = mongoose.model<Usuario>('Usuario', UsuariosSchema);
