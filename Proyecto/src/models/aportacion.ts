@@ -23,6 +23,7 @@ interface Descuento {
 // Interface principal
 export interface Aportacion extends Document {
   nombre_plan: Plan;
+  periodo: string; // 2025A, 2025B, 2026A, 2026B, etc.
   precio: number;
   precio_Casillero: number;
   gratisAlMes: GratisAlMes;

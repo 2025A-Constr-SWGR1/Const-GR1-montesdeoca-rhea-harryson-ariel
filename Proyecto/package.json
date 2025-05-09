@@ -4,23 +4,31 @@
   "description": "modulo de aplicacion AEIS",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch 'src/**' --ext 'ts,json' --exec 'npm run build && npm run start' ",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "jest"
   },
   "author": "arl2k3",
   "license": "UNLICENSED",
   "dependencies": {
     "@typegoose/typegoose": "^12.15.0",
     "dotenv": "^16.5.0",
-    "express": "^4.21.2",
-    "mongoose": "^8.14.0"
+    "express": "^4.21.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
+    "@types/jest": "^29.5.14",
     "@types/mongoose": "^5.11.96",
     "@types/node": "^20.17.32",
+    "@types/supertest": "^6.0.3",
+    "jest": "^29.7.0",
+    "mongoose": "^8.14.1",
     "nodemon": "^3.1.0",
-    "typescript": "^5.4.5"
+    "supertest": "^7.1.0",
+    "ts-jest": "^29.3.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
   }
 }

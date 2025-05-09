@@ -1,39 +1,76 @@
-import { UsuarioModel, Usuario } from '../models/usuario';
+import { Usuario, UsuarioModel } from '../models/usuario';
 import { deterministicHash } from '../utils/idEncoder';
 
 export class UsuarioService {
-  async createUser(usuarioData: Omit<Usuario, '_id'>): Promise<Usuario> {
-    const { codigo_unico } = usuarioData;
-    if (!codigo_unico) {
-      throw new Error('El campo codigo_unico es obligatorio');
+  async createUsuario(usuarioData: Partial<Usuario>): Promise<Usuario> {
+    try {
+      // Generar ID hasheado
+      const hashedId = deterministicHash(usuarioData.codigo_unico!);
+      
+      // Verificar si ya existe un usuario con el mismo código único o cédula
+      const existingUsuario = await UsuarioModel.findOne({
+        $or: [
+          { codigo_unico: usuarioData.codigo_unico },
+          { cedula: usuarioData.cedula }
+        ]
+      });
+
+      if (existingUsuario) {
+        throw new Error('Ya existe un usuario con ese código único o cédula');
+      }
+
+      const usuario = new UsuarioModel({
+        _id: hashedId,
+        ...usuarioData
+      });
+
+      return await usuario.save();
+    } catch (error) {
+      throw error;
     }
-
-    const generatedId = deterministicHash(codigo_unico);
-
-    const nuevoUsuario = new UsuarioModel({
-      ...usuarioData,
-      _id: generatedId,
-    });
-
-    return await nuevoUsuario.save();
   }
 
-  // 👇 Ahora recibe `codigo_unico` y genera el hash antes de buscar
-  async getUserByCodigoUnico(codigo_unico: string): Promise<Usuario | null> {
-    const hashedId = deterministicHash(codigo_unico);
-    console.log("hashedId:",hashedId)
-    return await UsuarioModel.findById(hashedId).exec();
+  async getUsuario(id: string): Promise<Usuario | null> {
+    try {
+      return await UsuarioModel.findById(id);
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async updateUser(id: string, usuarioData: Partial<Omit<Usuario, '_id'>>): Promise<Usuario | null> {
-    return await UsuarioModel.findByIdAndUpdate(id, usuarioData, { new: true }).exec();
+  async getUsuarioByCodigoUnico(codigo_unico: string): Promise<Usuario | null> {
+    try {
+      return await UsuarioModel.findOne({ codigo_unico });
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async deleteUser(id: string): Promise<Usuario | null> {
-    return await UsuarioModel.findByIdAndDelete(id).exec();
+  async updateUsuario(id: string, updateData: Partial<Usuario>): Promise<Usuario | null> {
+    try {
+      return await UsuarioModel.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      );
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async findUsers(filter: Partial<Usuario>): Promise<Usuario[]> {
-    return await UsuarioModel.find(filter as any).exec();
+  async deleteUsuario(id: string): Promise<Usuario | null> {
+    try {
+      return await UsuarioModel.findByIdAndDelete(id);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getAllUsuarios(): Promise<Usuario[]> {
+    try {
+      return await UsuarioModel.find();
+    } catch (error) {
+      throw error;
+    }
   }
 }

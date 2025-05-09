@@ -1,26 +1,56 @@
-import { AportacionModel, Aportacion } from '../models/aportacion';
+import { Aportacion, AportacionModel } from '../models/aportacion';
 
 export class AportacionService {
-  async createAportacion(aportacionData: Omit<Aportacion, '_id'>): Promise<Aportacion> {
-    return await new AportacionModel(aportacionData).save();
+  async createAportacion(aportacionData: Partial<Aportacion>): Promise<Aportacion> {
+    try {
+      const aportacion = new AportacionModel(aportacionData);
+      return await aportacion.save();
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getAportacion(id: string): Promise<Aportacion | null> {
-    return await AportacionModel.findById(id).exec();
+    try {
+      return await AportacionModel.findById(id);
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async updateAportacion(
-    id: string,
-    aportacionData: Partial<Omit<Aportacion, '_id'>>,
-  ): Promise<Aportacion | null> {
-    return await AportacionModel.findByIdAndUpdate(id, aportacionData, { new: true }).exec();
+  async getAportacionByUsuario(usuario_id: string): Promise<Aportacion | null> {
+    try {
+      return await AportacionModel.findOne({ usuario_id });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateAportacion(id: string, updateData: Partial<Aportacion>): Promise<Aportacion | null> {
+    try {
+      return await AportacionModel.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      );
+    } catch (error) {
+      throw error;
+    }
   }
 
   async deleteAportacion(id: string): Promise<Aportacion | null> {
-    return await AportacionModel.findByIdAndDelete(id).exec();
+    try {
+      return await AportacionModel.findByIdAndDelete(id);
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async findAportaciones(filter: Partial<Aportacion>): Promise<Aportacion[]> {
-    return await AportacionModel.find(filter as any).exec();
+  async getAllAportaciones(): Promise<Aportacion[]> {
+    try {
+      return await AportacionModel.find();
+    } catch (error) {
+      throw error;
+    }
   }
 }
