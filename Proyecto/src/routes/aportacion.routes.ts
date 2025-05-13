@@ -5,23 +5,17 @@ export const aportacionRoutes = () => {
   const router = Router();
   const controller = new AportacionController();
 
-  // Create a new contribution for a user
-  router.post('/usuario/:codigo_unico', controller.createAportacion);
-
-  // Get all contributions
+  // Rutas principales
   router.get('/', controller.getAllAportaciones);
 
-  // Get contribution by ID
-  router.get('/:id', controller.getAportacion);
-
-  // Get contribution by user código único
+  // Rutas por usuario
+  router.post('/usuario/:codigo_unico', controller.createAportacion);
   router.get('/usuario/:codigo_unico', controller.getAportacionByUsuario);
 
-  // Update contribution
-  router.put('/:id', controller.updateAportacion);
-
-  // Delete contribution
-  router.delete('/:id', controller.deleteAportacion);
+  // Rutas por ID hasheado (periodo + codigo_unico)
+  router.get('/id/:id', controller.getAportacion);
+  router.put('/id/:id', controller.updateAportacion);
+  router.delete('/id/:id', controller.deleteAportacion);
 
   return router;
 };

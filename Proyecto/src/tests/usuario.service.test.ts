@@ -3,7 +3,7 @@ import { UsuarioService } from '../services/usuario.service';
 
 // Mock the deterministicHash function
 jest.mock('../utils/idEncoder', () => ({
-  deterministicHash: jest.fn((codigo_unico) => `hashed_id_${codigo_unico}`)
+  deterministicHash: jest.fn((input: string) => `hashed_${input}`)
 }));
 
 describe('UsuarioService', () => {
@@ -15,44 +15,47 @@ describe('UsuarioService', () => {
     usuarioService = new UsuarioService();
   });
 
+  afterEach(async () => {
+    // Additional cleanup after each test
+    await UsuarioModel.deleteMany({});
+  });
+
+  const createTestUserData = (suffix: string) => ({
+    nombre: suffix === '123' ? 'John' : 'Jane',
+    apellido: 'Doe',
+    cedula: `1234567890${suffix}`,
+    correo: `john${suffix}@example.com`,
+    celular: '1234567890',
+    clave: 'password123',
+    codigo_unico: `COD${suffix}`,
+    facultad: Facultad.FIS,
+    esAportante: true
+  });
+
   describe('createUsuario', () => {
     it('should create a new user successfully', async () => {
-      const usuarioData = {
-        nombre: 'John',
-        apellido: 'Doe',
-        cedula: '1234567890',
-        correo: 'john@example.com',
-        celular: '1234567890',
-        clave: 'password123',
-        codigo_unico: 'COD123',
-        facultad: Facultad.FIS,
-        esAportante: true
-      };
+      const usuarioData = createTestUserData('123');
 
       const usuario = await usuarioService.createUsuario(usuarioData);
 
       expect(usuario).toBeDefined();
-      expect(usuario._id).toBe('hashed_id_COD123');
+      expect(usuario._id).toBe(`hashed_${usuarioData.codigo_unico}`);
       expect(usuario.nombre).toBe(usuarioData.nombre);
       expect(usuario.codigo_unico).toBe(usuarioData.codigo_unico);
     });
 
     it('should throw error when creating user with duplicate codigo_unico', async () => {
-      const usuarioData = {
-        nombre: 'John',
-        apellido: 'Doe',
-        cedula: '1234567890',
-        correo: 'john@example.com',
-        celular: '1234567890',
-        clave: 'password123',
-        codigo_unico: 'COD123',
-        facultad: Facultad.FIS,
-        esAportante: true
-      };
+      const usuarioData = createTestUserData('123');
 
       await usuarioService.createUsuario(usuarioData);
 
-      await expect(usuarioService.createUsuario(usuarioData))
+      const duplicateData = {
+        ...usuarioData,
+        correo: 'john2@example.com',
+        cedula: '0987654321' // Different cédula to avoid duplicate key error
+      };
+
+      await expect(usuarioService.createUsuario(duplicateData))
         .rejects
         .toThrow('Ya existe un usuario con ese código único o cédula');
     });
@@ -60,17 +63,7 @@ describe('UsuarioService', () => {
 
   describe('getUsuario', () => {
     it('should return user by id', async () => {
-      const usuarioData = {
-        nombre: 'John',
-        apellido: 'Doe',
-        cedula: '1234567890',
-        correo: 'john@example.com',
-        celular: '1234567890',
-        clave: 'password123',
-        codigo_unico: 'COD123',
-        facultad: Facultad.FIS,
-        esAportante: true
-      };
+      const usuarioData = createTestUserData('123');
 
       const createdUsuario = await usuarioService.createUsuario(usuarioData);
       const foundUsuario = await usuarioService.getUsuario(createdUsuario._id);
@@ -87,23 +80,13 @@ describe('UsuarioService', () => {
 
   describe('getUsuarioByCodigoUnico', () => {
     it('should return user by codigo_unico', async () => {
-      const usuarioData = {
-        nombre: 'John',
-        apellido: 'Doe',
-        cedula: '1234567890',
-        correo: 'john@example.com',
-        celular: '1234567890',
-        clave: 'password123',
-        codigo_unico: 'COD123',
-        facultad: Facultad.FIS,
-        esAportante: true
-      };
+      const usuarioData = createTestUserData('123');
 
       await usuarioService.createUsuario(usuarioData);
-      const foundUsuario = await usuarioService.getUsuarioByCodigoUnico('COD123');
+      const foundUsuario = await usuarioService.getUsuarioByCodigoUnico(usuarioData.codigo_unico);
 
       expect(foundUsuario).toBeDefined();
-      expect(foundUsuario?.codigo_unico).toBe('COD123');
+      expect(foundUsuario?.codigo_unico).toBe(usuarioData.codigo_unico);
     });
 
     it('should return null for non-existent codigo_unico', async () => {
@@ -114,17 +97,7 @@ describe('UsuarioService', () => {
 
   describe('updateUsuario', () => {
     it('should update user successfully', async () => {
-      const usuarioData = {
-        nombre: 'John',
-        apellido: 'Doe',
-        cedula: '1234567890',
-        correo: 'john@example.com',
-        celular: '1234567890',
-        clave: 'password123',
-        codigo_unico: 'COD123',
-        facultad: Facultad.FIS,
-        esAportante: true
-      };
+      const usuarioData = createTestUserData('123');
 
       const createdUsuario = await usuarioService.createUsuario(usuarioData);
       const updatedUsuario = await usuarioService.updateUsuario(createdUsuario._id, {
@@ -145,17 +118,7 @@ describe('UsuarioService', () => {
 
   describe('deleteUsuario', () => {
     it('should delete user successfully', async () => {
-      const usuarioData = {
-        nombre: 'John',
-        apellido: 'Doe',
-        cedula: '1234567890',
-        correo: 'john@example.com',
-        celular: '1234567890',
-        clave: 'password123',
-        codigo_unico: 'COD123',
-        facultad: Facultad.FIS,
-        esAportante: true
-      };
+      const usuarioData = createTestUserData('123');
 
       const createdUsuario = await usuarioService.createUsuario(usuarioData);
       const deletedUsuario = await usuarioService.deleteUsuario(createdUsuario._id);
@@ -176,28 +139,8 @@ describe('UsuarioService', () => {
   describe('getAllUsuarios', () => {
     it('should return all users', async () => {
       const usuariosData = [
-        {
-          nombre: 'John',
-          apellido: 'Doe',
-          cedula: '1234567890',
-          correo: 'john@example.com',
-          celular: '1234567890',
-          clave: 'password123',
-          codigo_unico: 'COD123',
-          facultad: Facultad.FIS,
-          esAportante: true
-        },
-        {
-          nombre: 'Jane',
-          apellido: 'Doe',
-          cedula: '0987654321',
-          correo: 'jane@example.com',
-          celular: '0987654321',
-          clave: 'password456',
-          codigo_unico: 'COD456',
-          facultad: Facultad.FICA,
-          esAportante: false
-        }
+        createTestUserData('123'),
+        createTestUserData('456')
       ];
 
       await Promise.all(usuariosData.map(data => usuarioService.createUsuario(data)));

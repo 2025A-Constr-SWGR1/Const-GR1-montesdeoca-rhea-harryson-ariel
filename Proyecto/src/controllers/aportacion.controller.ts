@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Plan } from '../models/aportacion';
 import { AportacionService } from '../services/aportacion.service';
 import { UsuarioService } from '../services/usuario.service';
+import { deterministicHash } from '../utils/idEncoder';
 
 export class AportacionController {
   private aportacionService: AportacionService;
@@ -15,16 +16,16 @@ export class AportacionController {
   createAportacion = async (req: Request, res: Response): Promise<void> => {
     try {
       const { codigo_unico } = req.params;
-      const { nombre_plan, periodo, precio, precio_Casillero, gratisAlMes, descuentos } = req.body;
+      const { plan, periodo } = req.body;
 
       // Validación básica
-      if (!nombre_plan || !periodo || !precio) {
-        res.status(400).json({ error: 'Los campos nombre_plan, periodo y precio son obligatorios' });
+      if (!plan || !periodo) {
+        res.status(400).json({ error: 'Los campos plan y periodo son obligatorios' });
         return;
       }
 
       // Validar plan
-      if (!Object.values(Plan).includes(nombre_plan)) {
+      if (!Object.values(Plan).includes(plan)) {
         res.status(400).json({ error: 'Plan no válido' });
         return;
       }
@@ -36,34 +37,27 @@ export class AportacionController {
         return;
       }
 
-      // Verificar si el usuario ya tiene una aportación activa
-      const aportacionExistente = await this.aportacionService.getAportacionByUsuario(usuario._id);
-      if (aportacionExistente) {
-        res.status(409).json({ error: 'El usuario ya tiene una aportación activa' });
-        return;
-      }
+      const aportacion = await this.aportacionService.createAportacion(
+        usuario._id,
+        plan,
+        periodo
+      );
 
-      const aportacionData = {
-        nombre_plan,
-        periodo,
-        precio,
-        precio_Casillero,
-        gratisAlMes,
-        descuentos,
-        usuario_id: usuario._id
-      };
-
-      const aportacion = await this.aportacionService.createAportacion(aportacionData);
       res.status(201).json(aportacion);
     } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
+      if ((error as Error).message.includes('ya tiene una aportación activa')) {
+        res.status(409).json({ error: (error as Error).message });
+      } else {
+        res.status(500).json({ error: (error as Error).message });
+      }
     }
   };
 
   getAportacion = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const aportacion = await this.aportacionService.getAportacion(id);
+      const hashedId = deterministicHash(id);
+      const aportacion = await this.aportacionService.getAportacion(hashedId);
       
       if (!aportacion) {
         res.status(404).json({ error: 'Aportación no encontrada' });
@@ -79,14 +73,7 @@ export class AportacionController {
   getAportacionByUsuario = async (req: Request, res: Response): Promise<void> => {
     try {
       const { codigo_unico } = req.params;
-      const usuario = await this.usuarioService.getUsuarioByCodigoUnico(codigo_unico);
-      
-      if (!usuario) {
-        res.status(404).json({ error: 'Usuario no encontrado' });
-        return;
-      }
-
-      const aportacion = await this.aportacionService.getAportacionByUsuario(usuario._id);
+      const aportacion = await this.aportacionService.getAportacionByCodigoUnico(codigo_unico);
       
       if (!aportacion) {
         res.status(404).json({ error: 'No se encontró aportación para este usuario' });
@@ -103,12 +90,9 @@ export class AportacionController {
     try {
       const { id } = req.params;
       const updateData = req.body;
+      const hashedId = deterministicHash(id);
 
-      // No permitir actualizar campos sensibles
-      delete updateData._id;
-      delete updateData.usuario_id;
-
-      const aportacion = await this.aportacionService.updateAportacion(id, updateData);
+      const aportacion = await this.aportacionService.updateAportacion(hashedId, updateData);
       
       if (!aportacion) {
         res.status(404).json({ error: 'Aportación no encontrada' });
@@ -124,7 +108,8 @@ export class AportacionController {
   deleteAportacion = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const aportacion = await this.aportacionService.deleteAportacion(id);
+      const hashedId = deterministicHash(id);
+      const aportacion = await this.aportacionService.deleteAportacion(hashedId);
       
       if (!aportacion) {
         res.status(404).json({ error: 'Aportación no encontrada' });

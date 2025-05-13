@@ -12,10 +12,10 @@ export class UsuarioController {
   createUsuario = async (req: Request, res: Response): Promise<void> => {
     try {
       const { nombre, apellido, cedula, correo, celular, clave, codigo_unico, facultad, esAportante } = req.body;
-
+      console.log(req.body);
       // Validación básica
       if (!nombre || !apellido || !cedula || !correo || !celular || !clave || !codigo_unico || !facultad) {
-        res.status(400).json({ error: 'Todos los campos son obligatorios' });
+        res.status(400).json({ error: 'Todos los campos son obligatorios'  });
         return;
       }
 

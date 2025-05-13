@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 // Enums
 export enum Plan {
@@ -45,17 +45,76 @@ const DescuentoSchema = new Schema({
 });
 
 const AportacionesSchema: Schema = new Schema({
+  _id: { type: String },
   nombre_plan: { type: String, enum: Object.values(Plan), required: true },
+  periodo: { type: String, required: true },
   precio: { type: Number, required: true },
-  precio_Casillero: { type: Number },
-  gratisAlMes: { type: GratisAlMesSchema },
-  descuentos: { type: [DescuentoSchema] },
+  precio_Casillero: { type: Number, required: true },
+  gratisAlMes: { type: GratisAlMesSchema, required: true },
+  descuentos: { type: [DescuentoSchema], required: true },
   usuario_id: {
     type: String,
     required: true,
     ref: 'Usuario',
   },
 });
+
+// Plan Templates
+export const AvoCloudTemplate = {
+  nombre_plan: Plan.AvoCloud,
+  precio: 7.99,
+  precio_Casillero: 4.50,
+  gratisAlMes: {
+    billar: { usado: false },
+    pingPong: { usado: false }
+  },
+  descuentos: [
+    { nombre: "taza", descuento: 0.10 },
+    { nombre: "billar", descuento: 0.50 },
+    { nombre: "pingPong", descuento: 0.20 },
+    { nombre: "eventos", descuento: 0 }
+  ]
+};
+
+export const AvoTechTemplate = {
+  nombre_plan: Plan.AvoTech,
+  precio: 14.99,
+  precio_Casillero: 3.00,
+  gratisAlMes: {
+    billar: { usado: false },
+    pingPong: { usado: false },
+    hockey: { usado: false }
+  },
+  descuentos: [
+    { nombre: "ropa", descuento: 0.10 },
+    { nombre: "taza", descuento: 0.25 },
+    { nombre: "billar", descuento: 0.50 },
+    { nombre: "pingPong", descuento: 0.20 },
+    { nombre: "hockey", descuento: 0.25 },
+    { nombre: "eventos", descuento: 0 }
+  ]
+};
+
+export const AvoCoderTemplate = {
+  nombre_plan: Plan.AvoCoder,
+  precio: 19.99,
+  precio_Casillero: 0.00,
+  gratisAlMes: {
+    billar: { usado: false },
+    pingPong: { usado: false },
+    hockey: { usado: false },
+    consolas: { usado: false }
+  },
+  descuentos: [
+    { nombre: "ropa", descuento: 0.25 },
+    { nombre: "taza", descuento: 1.00 },
+    { nombre: "billar", descuento: 0.50 },
+    { nombre: "pingPong", descuento: 0.20 },
+    { nombre: "hockey", descuento: 0.25 },
+    { nombre: "consolas", descuento: 0.50 },
+    { nombre: "eventos", descuento: 0 }
+  ]
+};
 
 // Modelo
 export const AportacionModel = mongoose.model<Aportacion>('Aportacion', AportacionesSchema);
