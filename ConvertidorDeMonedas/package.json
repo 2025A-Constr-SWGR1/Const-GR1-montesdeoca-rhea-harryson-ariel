@@ -1,0 +1,21 @@
+{
+  "name": "convertidor-de-monedas",
+  "version": "1.0.0",
+  "description": "Un convertidor de monedas que aplica principios de clean code",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": ["convertidor", "monedas", "clean-code", "javascript"],
+  "author": "Grupo de Clean Code",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
