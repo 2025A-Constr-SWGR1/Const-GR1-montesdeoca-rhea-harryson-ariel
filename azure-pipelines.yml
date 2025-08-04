@@ -1,0 +1,92 @@
+trigger:
+  - main
+
+resources:
+  repositories:
+    - repository: self
+      type: git
+      ref: main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  Agent.Source.Git.ShallowFetchDepth: 0  # Disable shallow clone globally
+
+steps:
+  - checkout: self
+    fetchDepth: 0  # Fetch full git history
+    displayName: 'Checkout with full history'
+
+  - task: SonarCloudPrepare@3
+    displayName: '🔧 Preparar análisis SonarCloud'
+    inputs:
+      SonarQube: 'SonarCloud'
+      organization: 'reneguzman7'
+      scannerMode: 'Other'
+      extraProperties: |
+        sonar.projectKey=reneguzman7_gr02-iswd622-25a
+        sonar.projectName=webapp-aeis
+        sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
+  - task: Maven@4
+    displayName: '🔨 Build with Maven (with tests)'
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'clean verify'
+      options: '-Dfile.encoding=UTF-8 -Dproject.build.sourceEncoding=UTF-8'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.17'
+      mavenOptions: '-Xmx3072m'
+      publishJUnitResults: true
+      testResultsFiles: '**/target/surefire-reports/TEST-*.xml'
+      jdkArchitectureOption: 'x64'
+
+  - task: PublishTestResults@2
+    displayName: '🧪 Publicar resultados de pruebas'
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/target/surefire-reports/TEST-*.xml'
+      mergeTestResults: true
+    condition: always()
+
+  - task: CopyFiles@2
+    displayName: '📦 Copiar JAR al staging de artefactos'
+    inputs:
+      contents: '**/target/webapp-aeis-0.0.1-SNAPSHOT.jar'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
+      flattenFolders: true
+
+  - task: PublishBuildArtifacts@1
+    displayName: '🚀 Publicar artefactos de compilación'
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'drop'
+
+  - script: echo '✅ Build and tests completed successfully, artifact published.'
+    displayName: '📣 Mensaje de éxito'
+
+  - task: Maven@4
+    displayName: '📡 Ejecutar análisis SonarCloud'
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'verify sonar:sonar'
+      options: >
+        -Dsonar.projectKey=reneguzman7_gr02-iswd622-25a
+        -Dsonar.organization=reneguzman7
+        -Dsonar.host.url=https://sonarcloud.io
+        -Dsonar.token=$(SONAR_TOKEN)
+        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.17'
+
+  - script: echo '📊 Análisis SonarCloud finalizado.'
+    displayName: '🔍 Fin análisis SonarCloud'
+
+  - task: PublishCodeCoverageResults@2
+    displayName: '📈 Publicar cobertura de código JaCoCo'
+    inputs:
+      codeCoverageTool: 'JaCoCo'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml'
+      reportDirectory: '$(System.DefaultWorkingDirectory)/target/site/jacoco'
+      failIfCoverageEmpty: true
